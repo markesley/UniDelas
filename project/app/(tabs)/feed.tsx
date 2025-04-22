@@ -106,7 +106,7 @@ export default function FeedScreen() {
     if (!userId) return;
 
     try {
-      const response = await fetch(`http://192.168.0.60:3100/curtidas/${userId}/${postId}`, {
+      const response = await fetch(`http://192.168.0.60:3100/curtidas/${postId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -146,7 +146,7 @@ export default function FeedScreen() {
 
         {posts.map((post: any) => (
           <View key={post.id} style={styles.post}>
-            <Text style={styles.postAuthor}>{post.usuarioNome}</Text>
+            <Text style={styles.postAuthor}>{post.username}</Text>
             <Text style={styles.postContent}>{post.conteudo}</Text>
             <View style={styles.postActions}>
               <TouchableOpacity
