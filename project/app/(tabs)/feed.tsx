@@ -2,11 +2,16 @@ import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { MessageCircle, Heart } from 'lucide-react-native';
 import { getUserData } from '../../utils/storage';
+import { useRouter } from 'expo-router'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
 
 export default function FeedScreen() {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState('');
   const [userId, setUserId] = useState<string | null>(null); // estado para o ID do usuário
+  const router = useRouter()
 
   // Quando o componente montar, busca os dados do usuário
   useEffect(() => {
@@ -146,8 +151,22 @@ export default function FeedScreen() {
 
         {posts.map((post: any) => (
           <View key={post.id} style={styles.post}>
-            <Text style={styles.postAuthor}>{post.username}</Text>
+             <TouchableOpacity
+              onPress={() => router.push({
+                pathname: '/profile/[id]',
+                params: { id: post.usuarioId },
+              })}
+            >
+              <Text style={styles.postAuthor}>
+                {post.username}
+              </Text>
+            </TouchableOpacity>
             <Text style={styles.postContent}>{post.conteudo}</Text>
+            <Text style={{ color: '#999', fontSize: 12 }}>
+        {format(new Date(post.dataPublicacao), "dd/MM/yyyy 'às' HH:mm", {
+          locale: ptBR,
+        })}
+      </Text>
             <View style={styles.postActions}>
               <TouchableOpacity
                 style={styles.actionButton}
@@ -160,9 +179,7 @@ export default function FeedScreen() {
                 )}
                 <Text style={styles.actionText}>{post.curtidas || 0}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionButton} onPress={() => handleUnlike(post.id)}>
-                <Text style={styles.actionText}>Descurtir</Text>
-              </TouchableOpacity>
+              
             </View>
           </View>
         ))}

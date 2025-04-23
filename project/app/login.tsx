@@ -21,9 +21,7 @@ export default function LoginScreen() {
 
   // 1) Pede permissão e retorna expoPushToken
   const registerForPushNotificationsAsync = async (): Promise<string> => {
-    let token: string
-
-    // iOS precisa pedir permissão primeiro
+    // iOS: pedir permissão
     const { status: existingStatus } = await Notifications.getPermissionsAsync()
     let finalStatus = existingStatus
     if (existingStatus !== 'granted') {
@@ -35,9 +33,9 @@ export default function LoginScreen() {
     }
 
     const tokenData = await Notifications.getExpoPushTokenAsync()
-    token = tokenData.data
+    const token = tokenData.data
 
-    // Android: configurar canal default
+    // Android: configurar canal
     if (Platform.OS === 'android') {
       Notifications.setNotificationChannelAsync('default', {
         name: 'default',
@@ -86,7 +84,12 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Nome do App */}
+      <Text style={styles.appName}>UniDelas</Text>
+
+      {/* Título de acolhimento */}
       <Text style={styles.title}>Bem‑vinda</Text>
+
       <TextInput
         style={styles.input}
         placeholder="E‑mail"
@@ -107,6 +110,10 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Entrar</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => router.push('/register')}>
+        <Text style={styles.link}>Ainda não tem conta? Cadastre-se</Text>
+      </TouchableOpacity>
     </View>
   )
 }
@@ -119,9 +126,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
   },
-  title: {
-    fontSize: 28,
+  appName: {
+    fontSize: 32,
     fontWeight: 'bold',
+    color: COLORS.primary,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '600',
     color: COLORS.primary,
     marginBottom: 24,
   },
@@ -145,5 +158,10 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  link: {
+    color: COLORS.primary,
+    marginTop: 14,
+    textDecorationLine: 'underline',
   },
 })

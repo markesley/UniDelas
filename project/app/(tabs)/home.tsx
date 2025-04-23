@@ -49,7 +49,7 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       {/* HEADER */}
       <View style={styles.header}>
-        <Text style={styles.title}>Bem-vinda ao Juntas</Text>
+        <Text style={styles.title}>UniDelas</Text>
         <Text style={styles.subtitle}>Um espaço seguro para todas nós</Text>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Sair</Text>

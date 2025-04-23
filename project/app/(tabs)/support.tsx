@@ -258,7 +258,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: '#8B4F9F',
   },
-  actionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  btnAccept: { backgroundColor: '#4CAF50' },
-  btnReject: { backgroundColor: '#F44336' },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',  // mantém distância
+    marginTop: 12,
+  },
+  actionBtn: {
+    // largura automática, definimos o padding
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  btnAccept: {
+    backgroundColor: '#388E3C', // Verde mais escuro e forte
+  },
+  btnReject: {
+    backgroundColor: '#D32F2F', // Vermelho mais forte
+  },
 })
