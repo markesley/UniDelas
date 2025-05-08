@@ -10,6 +10,7 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { API_BASE_URL } from './config/config'
 
 type Emergency = {
   id: string
@@ -27,7 +28,7 @@ export default function EmergenciesScreen() {
 
   useEffect(() => {
     setLoading(true)
-    fetch('http://192.168.0.60:3100/alertas-emergencia/recebidos', {
+    fetch(`${API_BASE_URL}/alertas-emergencia/recebidos`, {
       credentials: 'include',
     })
       .then((res) => {

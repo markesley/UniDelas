@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native'
 import { useRouter } from 'expo-router'
+import { API_BASE_URL } from '../config/config'
 
 interface SimpleUser {
   id: string
@@ -46,7 +47,7 @@ export default function SupportScreen() {
   async function loadPending() {
     try {
       const res = await fetch(
-        'http://192.168.0.60:3100/rede-apoio/solicitacao/pendentes',
+        `${API_BASE_URL}/rede-apoio/solicitacao/pendentes`,
         { credentials: 'include' }
       )
       if (!res.ok) throw new Error('Falha ao carregar pendentes')
@@ -60,7 +61,7 @@ export default function SupportScreen() {
   async function loadContacts() {
     try {
       const res = await fetch(
-        'http://192.168.0.60:3100/contatos-confianca/meus-contatos',
+        `${API_BASE_URL}/contatos-confianca/meus-contatos`,
         { credentials: 'include' }
       )
       if (!res.ok) throw new Error('Falha ao carregar contatos')
@@ -75,7 +76,7 @@ export default function SupportScreen() {
     if (!searchEmail.trim()) return
     try {
       const res = await fetch(
-        `http://192.168.0.60:3100/usuarios/search/${searchEmail}`,
+        `${API_BASE_URL}/usuarios/search/${searchEmail}`,
         { credentials: 'include' }
       )
       if (res.status === 404) {
@@ -94,7 +95,7 @@ export default function SupportScreen() {
     if (!foundUser) return
     try {
       const res = await fetch(
-        'http://192.168.0.60:3100/rede-apoio/solicitacao',
+        `${API_BASE_URL}/rede-apoio/solicitacao`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -116,7 +117,7 @@ export default function SupportScreen() {
   async function accept(id: string) {
     try {
       const res = await fetch(
-        `http://192.168.0.60:3100/rede-apoio/solicitacao/${id}/aceitar`,
+        `${API_BASE_URL}/rede-apoio/solicitacao/${id}/aceitar`,
         {
           method: 'PUT',
           credentials: 'include',
@@ -135,7 +136,7 @@ export default function SupportScreen() {
   async function reject(id: string) {
     try {
       const res = await fetch(
-        `http://192.168.0.60:3100/rede-apoio/solicitacao/${id}`,
+        `${API_BASE_URL}/rede-apoio/solicitacao/${id}`,
         {
           method: 'DELETE',
           credentials: 'include',

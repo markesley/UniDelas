@@ -16,6 +16,7 @@ import {
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { COLORS } from './theme'
+import { API_BASE_URL } from './config/config'
 
 interface University {
   id: string
@@ -40,7 +41,7 @@ export default function RegisterScreen() {
   const [universidadeId, setUniversidadeId] = useState('')
 
   useEffect(() => {
-    fetch('http://192.168.0.60:3100/university', { credentials: 'include' })
+    fetch(`${API_BASE_URL}/university`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error('Não foi possível carregar universidades')
         return res.json()
@@ -68,7 +69,7 @@ export default function RegisterScreen() {
       return Alert.alert('Atenção', 'Preencha todos os campos.')
     }
     try {
-      const res = await fetch('http://192.168.0.60:3100/users', {
+      const res = await fetch(`${API_BASE_URL}/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

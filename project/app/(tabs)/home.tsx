@@ -8,20 +8,20 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native'
-import { Bell } from 'lucide-react-native'
+import { Bell, AlertTriangle, HeartHandshake, Calendar } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { API_BASE_URL } from '../config/config'
 
 export default function HomeScreen() {
   const router = useRouter()
   const [alertCount, setAlertCount] = useState(0)
 
-  // Busca quantos alertas eu recebi
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
         const res = await fetch(
-          'http://192.168.0.60:3100/alertas-emergencia/recebidos',
+          `${API_BASE_URL}/alertas-emergencia/recebidos`,
           { credentials: 'include' }
         )
         if (!res.ok) throw new Error('Erro na busca')
@@ -29,18 +29,16 @@ export default function HomeScreen() {
         setAlertCount(Array.isArray(data) ? data.length : 0)
       } catch (err: any) {
         console.error(err)
-        // você pode exibir um toast se quiser
       }
     }
     fetchAlerts()
   }, [])
 
-  // Logout
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('token')
       router.replace('/login')
-    } catch (err) {
+    } catch {
       Alert.alert('Erro', 'Não foi possível deslogar')
     }
   }
@@ -56,9 +54,9 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* BANNER DE EMERGÊNCIAS (sempre aparece) */}
+      {/* BANNER DE EMERGÊNCIAS (AMARELO) */}
       <View style={styles.alertBanner}>
-        <Bell size={20} color="#FFF" />
+        <Bell size={20} color="#000" />
         <TouchableOpacity
           style={styles.alertButton}
           onPress={() => router.push('/alertas-recebidos')}
@@ -69,19 +67,32 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* BOTÃO DE PERIGO CENTRALIZADO */}
+      <View style={styles.panicContainer}>
+        <TouchableOpacity
+          style={styles.panicButton}
+          onPress={() => router.push('/panic')}
+        >
+          <AlertTriangle size={28} color="#FFF" />
+          <Text style={styles.panicText}>Botão de Perigo</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* AÇÕES RÁPIDAS */}
       <View style={styles.quickActions}>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => router.push('/panic')}
+          onPress={() => router.push('/support')}
         >
-          <Text style={styles.buttonText}>Botão de Emergência</Text>
+          <HeartHandshake size={24} color="#FFF" />
+          <Text style={styles.buttonText}>Encontrar Apoio</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => router.push('/support')}
+          onPress={() => router.push('/groups')}
         >
-          <Text style={styles.buttonText}>Encontrar Apoio</Text>
+          <Calendar size={24} color="#FFF" />
+          <Text style={styles.buttonText}>Eventos e Grupos</Text>
         </TouchableOpacity>
       </View>
 
@@ -125,28 +136,56 @@ const styles = StyleSheet.create({
 
   alertBanner: {
     flexDirection: 'row',
-    backgroundColor: '#D72638',
+    backgroundColor: '#FFD700', // amarelo para alertas
     padding: 12,
     margin: 20,
     borderRadius: 8,
     alignItems: 'center',
   },
   alertButton: { marginLeft: 8 },
-  alertText: { color: '#FFF', fontWeight: 'bold' },
+  alertText: { color: '#000', fontWeight: 'bold' },
+
+  panicContainer: {
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  panicButton: {
+    backgroundColor: '#D72638', // vermelho de perigo
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+  },
+  panicText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 12,
+  },
 
   quickActions: {
-    padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   actionButton: {
     backgroundColor: '#B366CC',
-    padding: 15,
+    paddingVertical: 15,
+    paddingHorizontal: 12,
     borderRadius: 12,
     width: '48%',
     alignItems: 'center',
+    gap: 8,
   },
-  buttonText: { color: '#FFF', fontSize: 16, fontWeight: '600' },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 
   infoSection: { padding: 20 },
   sectionTitle: {

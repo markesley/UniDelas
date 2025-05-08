@@ -7,6 +7,7 @@ import * as Notifications from 'expo-notifications'
 import Constants from 'expo-constants'
 import { COLORS } from './theme'
 import { storeUserData } from '../utils/storage'
+import { API_BASE_URL } from './config/config'
 
 interface LoginResponse {
   id: string
@@ -54,7 +55,7 @@ export default function LoginScreen() {
       const expoPushToken = await registerForPushNotificationsAsync()
 
       // 3) chama o backend incluindo o token
-      const response = await fetch('http://192.168.0.60:3100/login', {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

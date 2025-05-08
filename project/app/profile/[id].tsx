@@ -11,6 +11,7 @@ import {
   SafeAreaView,
 } from 'react-native'
 import { useRouter, useLocalSearchParams } from 'expo-router'
+import { API_BASE_URL } from '../config/config'
 
 interface Profile {
   id: string
@@ -57,7 +58,7 @@ export default function ProfileScreen() {
 
   async function fetchProfile() {
     try {
-      const res = await fetch(`http://192.168.0.60:3100/users/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/users/${id}`, {
         credentials: 'include',
       })
       if (!res.ok) throw new Error('Falha ao carregar perfil')

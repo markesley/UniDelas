@@ -1,15 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Linking,
+  ScrollView,
+  SafeAreaView,
+} from 'react-native';
 import { Bell } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import { getUserData } from '../../utils/storage'; // ajuste o path conforme sua estrutura
+import { API_BASE_URL } from '../config/config';
+import { FontAwesome } from '@expo/vector-icons';
 
 export default function PanicScreen() {
   const [isActivated, setIsActivated] = useState(false);
   const [location, setLocation] = useState<Location.LocationObjectCoords | null>(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [whatsappLinks, setWhatsappLinks] = useState<{ nome: string; link: string }[]>([]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -30,10 +43,7 @@ export default function PanicScreen() {
         'Ativar Alerta de Emergência',
         'Isso enviará sua localização para seus contatos de confiança. Deseja continuar?',
         [
-          {
-            text: 'Cancelar',
-            style: 'cancel',
-          },
+          { text: 'Cancelar', style: 'cancel' },
           {
             text: 'Ativar',
             onPress: async () => {
@@ -53,9 +63,8 @@ export default function PanicScreen() {
               let currentLocation = await Location.getCurrentPositionAsync({});
               setLocation(currentLocation.coords);
 
-              // Envia pro backend
               try {
-                const response = await fetch('http://192.168.0.60:3100/alertas-emergencia', {
+                const response = await fetch(`${API_BASE_URL}/alertas-emergencia`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   credentials: 'include',
@@ -66,7 +75,9 @@ export default function PanicScreen() {
                 });
 
                 if (response.ok) {
-                  Alert.alert('Alerta enviado', 'Sua localização foi capturada e enviada com sucesso!');
+                  const result = await response.json();
+                  setWhatsappLinks(result.whatsappLinks || []);
+                  Alert.alert('Alerta enviado', 'Sua localização foi enviada com sucesso!');
                   setIsActivated(true);
                 } else {
                   const errorText = await response.text();
@@ -91,8 +102,8 @@ export default function PanicScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Botão de Emergência</Text>
         <Text style={styles.description}>
           Em caso de perigo, pressione o botão abaixo para enviar sua localização
@@ -101,12 +112,38 @@ export default function PanicScreen() {
 
         <TouchableOpacity
           style={[styles.panicButton, isActivated && styles.panicButtonActive]}
-          onPress={handlePanic}>
+          onPress={handlePanic}
+        >
           <Bell size={48} color="#FFF" />
           <Text style={styles.panicButtonText}>
             {isActivated ? 'Desativar Alerta' : 'Ativar Alerta'}
           </Text>
         </TouchableOpacity>
+
+        {whatsappLinks.length > 0 && (
+          <View style={{ marginTop: 20, width: '100%' }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#8B4F9F', marginBottom: 8 }}>
+              Enviar mensagem pelo WhatsApp:
+            </Text>
+            {whatsappLinks.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={{
+                  backgroundColor: '#25D366',
+                  padding: 12,
+                  borderRadius: 6,
+                  marginBottom: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+                onPress={() => Linking.openURL(item.link)}
+              >
+                <Text style={{ color: '#fff', fontSize: 16, flex: 1 }}>{item.nome}</Text>
+                <FontAwesome name="whatsapp" size={20} color="#fff" style={{ marginLeft: 10 }} />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {loadingLocation && <ActivityIndicator size="large" color="#8B4F9F" style={{ marginTop: 20 }} />}
 
@@ -129,8 +166,8 @@ export default function PanicScreen() {
           <Text style={styles.helpText}>Polícia: 190</Text>
           <Text style={styles.helpText}>Central de Atendimento à Mulher: 180</Text>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -139,16 +176,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8F0FC',
   },
-  content: {
+  scrollContent: {
     padding: 20,
     alignItems: 'center',
-    flex: 1,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#8B4F9F',
     marginBottom: 16,
+    textAlign: 'center',
   },
   description: {
     fontSize: 16,

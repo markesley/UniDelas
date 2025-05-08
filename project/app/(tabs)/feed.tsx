@@ -1,64 +1,73 @@
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { MessageCircle, Heart } from 'lucide-react-native';
-import { getUserData } from '../../utils/storage';
+// app/(tabs)/feed.tsx
+import React, { useEffect, useState } from 'react'
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+} from 'react-native'
+import { MessageCircle, Heart } from 'lucide-react-native'
 import { useRouter } from 'expo-router'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { API_BASE_URL } from '../config/config'
 
+interface Post {
+  id: string
+  usuarioId: string
+  username: string
+  conteudo: string
+  dataPublicacao: string
+  curtidas: number
+  liked: boolean
+  comentariosCount: number
+}
 
 export default function FeedScreen() {
-  const [posts, setPosts] = useState([]);
-  const [newPost, setNewPost] = useState('');
-  const [userId, setUserId] = useState<string | null>(null); // estado para o ID do usuário
+  const [posts, setPosts] = useState<Post[]>([])
+  const [newPost, setNewPost] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  // Quando o componente montar, busca os dados do usuário
   useEffect(() => {
-    const loadUserAndPosts = async () => {
-      const userData = await getUserData();
-      if (userData?.id) {
-        setUserId(userData.id);
-        console.log('ID do usuário:', userData.id);
-        fetchPosts(); // chama sem parâmetro
-      } else {
-        console.log('Nenhum dado de usuário encontrado no storage');
-      }
-    };
-    loadUserAndPosts();
-  }, []);
+    fetchPosts()
+  }, [])
 
   const fetchPosts = async () => {
+    setLoading(true)
     try {
-      const url = `http://192.168.0.60:3100/posts`;  // sem query param
-      console.log('Buscando posts em:', url);
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(`${API_BASE_URL}/posts`, {
         credentials: 'include',
-      });
-      
-      console.log('Status da resposta:', response.status);
-      const responseText = await response.text();
-      console.log('Resposta completa:', responseText);
-      
-      const data = JSON.parse(responseText);
+      })
+      if (!res.ok) throw new Error('Falha ao buscar posts')
+      const data: Post[] = await res.json()
+      // supondo que seu back já inclua um campo comentariosCount
       setPosts(
-        data.sort((a: any, b: any) => new Date(b.dataPublicacao).getTime() - new Date(a.dataPublicacao).getTime())
-      );
-    } catch (error) {
-      console.error('Erro ao buscar posts:', error);
+        data.sort(
+          (a, b) =>
+            new Date(b.dataPublicacao).getTime() -
+            new Date(a.dataPublicacao).getTime()
+        )
+      )
+    } catch (err: any) {
+      console.error(err)
+      Alert.alert('Erro', err.message)
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   const handlePost = async () => {
     if (!newPost.trim()) {
-      Alert.alert('Aviso', 'Digite algo antes de publicar!');
-      return;
+      Alert.alert('Aviso', 'Digite algo antes de publicar!')
+      return
     }
-  
     try {
-      const response = await fetch('http://192.168.0.60:3100/posts', {
+      const res = await fetch(`${API_BASE_URL}/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -67,169 +76,119 @@ export default function FeedScreen() {
           visibilidade: 'PUBLICO',
           status: 'ATIVO',
         }),
-      });
-  
-      if (response.ok) {
-        setNewPost('');
-        fetchPosts();
-      } else {
-        Alert.alert('Erro', 'Não foi possível publicar o post.');
-      }
-    } catch (error) {
-      console.error('Erro ao publicar post:', error);
+      })
+      if (!res.ok) throw new Error('Não foi possível publicar')
+      setNewPost('')
+      fetchPosts()
+    } catch (err: any) {
+      console.error(err)
+      Alert.alert('Erro', err.message)
     }
-  };
+  }
 
-  const handleLike = async (postId: string) => {
-    if (!userId) return;
-
-    try {
-      const response = await fetch(`http://192.168.0.60:3100/curtidas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ usuarioId: userId, postId }),
-      });
-
-      if (response.ok) {
-        setPosts((prevPosts: any) =>
-          prevPosts.map((post: any) =>
-            post.id === postId
-              ? { ...post, curtidas: (post.curtidas || 0) + 1, liked: true }
-              : post
-          )
-        );
-      } else {
-        Alert.alert('Erro', 'Não foi possível curtir o post.');
-      }
-    } catch (error) {
-      console.error('Erro ao curtir post:', error);
-    }
-  };
-
-  const handleUnlike = async (postId: string) => {
-    if (!userId) return;
-
-    try {
-      const response = await fetch(`http://192.168.0.60:3100/curtidas/${postId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        setPosts((prevPosts: any) =>
-          prevPosts.map((post: any) =>
-            post.id === postId
-              ? { ...post, curtidas: Math.max(0, (post.curtidas || 0) - 1), liked: false }
-              : post
-          )
-        );
-      } else {
-        Alert.alert('Erro', 'Não foi possível remover a curtida.');
-      }
-    } catch (error) {
-      console.error('Erro ao remover curtida:', error);
-    }
-  };
+  if (loading)
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#8B4F9F" />
+      </View>
+    )
 
   return (
-    <View style={styles.container}>
-      <ScrollView style={styles.feed}>
-        <View style={styles.postInput}>
-          <TextInput
-            style={styles.input}
-            placeholder="Compartilhe sua história..."
-            placeholderTextColor="#555"
-            multiline
-            value={newPost}
-            onChangeText={setNewPost}
-          />
-          <TouchableOpacity style={styles.postButton} onPress={handlePost}>
-            <Text style={styles.postButtonText}>Publicar</Text>
-          </TouchableOpacity>
-        </View>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+      {/* Novo post */}
+      <View style={styles.postInput}>
+        <TextInput
+          style={styles.input}
+          placeholder="Compartilhe sua história..."
+          placeholderTextColor="#555"
+          multiline
+          value={newPost}
+          onChangeText={setNewPost}
+        />
+        <TouchableOpacity style={styles.postButton} onPress={handlePost}>
+          <Text style={styles.postButtonText}>Publicar</Text>
+        </TouchableOpacity>
+      </View>
 
-        {posts.map((post: any) => (
-          <View key={post.id} style={styles.post}>
-             <TouchableOpacity
-              onPress={() => router.push({
+      {/* Lista de posts */}
+      {posts.map((post) => (
+        <View key={post.id} style={styles.post}>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
                 pathname: '/profile/[id]',
                 params: { id: post.usuarioId },
-              })}
-            >
-              <Text style={styles.postAuthor}>
-                {post.username}
-              </Text>
+              })
+            }
+          >
+            <Text style={styles.postAuthor}>{post.username}</Text>
+          </TouchableOpacity>
+          <Text style={styles.postContent}>{post.conteudo}</Text>
+          <Text style={styles.postDate}>
+            {format(new Date(post.dataPublicacao), "dd/MM/yyyy 'às' HH:mm", {
+              locale: ptBR,
+            })}
+          </Text>
+          <View style={styles.postActions}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Heart size={20} color="#8B4F9F" />
+              <Text style={styles.actionText}>{post.curtidas}</Text>
             </TouchableOpacity>
-            <Text style={styles.postContent}>{post.conteudo}</Text>
-            <Text style={{ color: '#999', fontSize: 12 }}>
-        {format(new Date(post.dataPublicacao), "dd/MM/yyyy 'às' HH:mm", {
-          locale: ptBR,
-        })}
-      </Text>
-            <View style={styles.postActions}>
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={() => (post.liked ? handleUnlike(post.id) : handleLike(post.id))}
-              >
-                {post.liked ? (
-                  <Heart size={20} color="#8B4F9F" fill="#8B4F9F" />
-                ) : (
-                  <Heart size={20} color="#8B4F9F" />
-                )}
-                <Text style={styles.actionText}>{post.curtidas || 0}</Text>
-              </TouchableOpacity>
-              
-            </View>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() =>
+                router.push({
+                  pathname: '/comments/[postId]',
+                  params: { postId: post.id },
+                })
+              }
+            >
+              <MessageCircle size={20} color="#8B4F9F" />
+              <Text style={styles.actionText}>{post.comentariosCount}</Text>
+            </TouchableOpacity>
           </View>
-        ))}
-      </ScrollView>
-    </View>
-  );
+        </View>
+      ))}
+    </ScrollView>
+  )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8F0FC' },
-  feed: { flex: 1 },
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   postInput: {
-    padding: 15,
+    padding: 12,
     backgroundColor: '#FFF',
     margin: 10,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
-  input: { height: 100, textAlignVertical: 'top', padding: 10, fontSize: 16 },
+  input: { height: 80, textAlignVertical: 'top', padding: 10, fontSize: 16 },
   postButton: {
     backgroundColor: '#8B4F9F',
-    padding: 10,
+    padding: 8,
     borderRadius: 8,
-    alignItems: 'center',
+    alignSelf: 'flex-end',
+    marginTop: 4,
   },
   postButtonText: { color: '#FFF', fontWeight: '600' },
+
   post: {
     backgroundColor: '#FFF',
-    padding: 15,
-    margin: 10,
+    padding: 12,
+    marginHorizontal: 10,
+    marginBottom: 16,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
-  postAuthor: { fontSize: 16, fontWeight: '600', color: '#8B4F9F', marginBottom: 8 },
-  postContent: { fontSize: 14, color: '#333', lineHeight: 20 },
+  postAuthor: { fontSize: 16, fontWeight: '600', color: '#8B4F9F' },
+  postContent: { fontSize: 14, color: '#333', marginVertical: 8 },
+  postDate: { fontSize: 12, color: '#999', marginBottom: 8 },
+
   postActions: {
     flexDirection: 'row',
-    marginTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    paddingTop: 15,
+    alignItems: 'center',
   },
-  actionButton: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
-  actionText: { marginLeft: 5, color: '#666' },
-});
+  actionButton: { flexDirection: 'row', alignItems: 'center', marginRight: 16 },
+  actionText: { marginLeft: 4, color: '#666' },
+})
